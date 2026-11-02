@@ -1,0 +1,606 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0f172a">
+<title>Amoriva – Chat</title>
+<link rel="stylesheet" href="common.css">
+<style>
+  #lockBar { padding: 14px 14px calc(14px + env(safe-area-inset-bottom)); background: var(--surface); border-top: 1px solid var(--border); }
+  .invite-cta { width: 100%; border: 0; cursor: pointer; border-radius: 18px; padding: 18px 20px;
+    background: linear-gradient(135deg, #7c3aed, #a855f7); color: #fff;
+    box-shadow: 0 10px 26px rgba(124, 58, 237, .45); display: flex; flex-direction: column;
+    align-items: center; gap: 3px; transition: transform .12s, box-shadow .2s; }
+  .invite-cta:active { transform: scale(.98); box-shadow: 0 6px 16px rgba(124, 58, 237, .4); }
+  .invite-cta .ic { font-size: 1.9rem; line-height: 1; margin-bottom: 2px; }
+  .invite-cta .t { font-weight: 800; font-size: 1.08rem; }
+  .invite-cta .s { font-size: .82rem; opacity: .9; font-weight: 600; }
+</style>
+</head>
+<body>
+<div class="chat-page">
+  <div class="chat-head">
+    <button class="back" onclick="history.length > 1 ? history.back() : location.href='chats.html'">←</button>
+    <div id="headAvatar"></div>
+    <div style="flex:1;min-width:0">
+      <div class="name" id="headName">…</div>
+      <div class="status-text" id="headStatus"></div>
+    </div>
+    <span class="pts-chip" id="ptsChip" title="Points earned">$0.00</span>
+    <button class="icon-btn" id="callBtn" title="Video call" style="margin-right:6px">📹</button>
+    <button class="icon-btn" id="menuBtn">⋯</button>
+  </div>
+
+  <div class="messages" id="msgs">
+    <div class="notice">🛡️All chats are end to end encrypted. Keep it friendly.</div>
+  </div>
+
+  <div class="starter hidden" id="starters"></div>
+  <div class="small muted center hidden" id="lockHint" style="margin:0 12px 6px">🎁 Invite a friend to unlock chatting — tap the box to get your code.</div>
+  <div class="composer" id="composer">
+    <textarea class="input" id="text" rows="1" maxlength="1000" placeholder="Type a message…"></textarea>
+    <button class="btn btn-primary" id="sendBtn">Send</button>
+  </div>
+  <div class="notice hidden" id="blockedNote" style="margin:10px 12px"></div>
+  <div class="hidden" id="lockBar">
+    <button class="invite-cta" id="lockBtn">
+      <span class="ic">🎁</span>
+      <span class="t">Invite a friend to unlock chatting</span>
+      <span class="s">Tap to get your invite code</span>
+    </button>
+  </div>
+</div>
+
+<!-- Invite sheet -->
+<div class="sheet-bg" id="inviteSheet">
+  <div class="sheet">
+    <div class="invite-hero">
+      <div class="ih-ic">💵</div>
+      <h3>Activate Your Account</h3>
+      <p>Pay KSh 155 ($1.19) once via M-Pesa Buy Goods to activate your account.</p>
+    </div>
+    <div class="inv-steps">
+      <div class="inv-step"><span class="sn">1</span> Open M-Pesa menu on your mobile phone</div>
+      <div class="inv-step"><span class="sn">2</span> Go to lipa na M-PESA → Choose Buy Goods and Services</div>
+      <div class="inv-step"><span class="sn">3</span> Enter Till Number: <span class="code" id="myCode">9283776</span></div>
+      <div class="inv-step"><span class="sn">4</span> Enter Amount: <span class="code" id="step4">Ksh 155</span></div>
+      <div class="inv-step"><span class="sn">5</span> Enter your M-Pesa PIN and complete transaction</div>
+      <div class="inv-step"><span class="sn">6</span> Copy and paste the full M-Pesa SMS confirmation message below to verify</div>
+    </div>
+    <div class="stack" style="margin-bottom:18px">
+      <button class="btn btn-green" id="copyCode">📋 Copy Till Number</button>
+      <button class="btn btn-outline" id="shareCode" disabled style="display:none">📤 Share invite</button>
+    </div>
+    <label class="inv-label">Already paid? Paste the M-Pesa message here</label>
+    <div class="field" style="margin-top:0">
+      <textarea class="input code-paste" id="inviteInput" placeholder="Paste your M-Pesa confirmation SMS here…"></textarea>
+    </div>
+    <div class="stack">
+      <button class="btn btn-primary" id="unlockBtn">Verify SMS & Activate Account Now</button>
+      <button class="btn btn-outline" data-close>Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- Menu sheet -->
+<div class="sheet-bg" id="menu">
+  <div class="sheet stack">
+    <div id="profileView"></div>
+    <button class="btn btn-outline" id="blockBtn">🚫 Block</button>
+    <button class="btn btn-danger" id="reportOpen">⚠️ Report</button>
+    <button class="btn btn-outline" data-close>Close</button>
+  </div>
+</div>
+
+<!-- Report sheet -->
+<div class="sheet-bg" id="reportSheet">
+  <div class="sheet">
+    <h3>Report this member</h3>
+    <div class="field">
+      <select class="input" id="reason">
+        <option>Asking for money or payments</option>
+        <option>Scam or fake profile</option>
+        <option>Harassment or hate</option>
+        <option>Sexual or inappropriate content</option>
+        <option>Spam</option>
+        <option>Seems under 18</option>
+        <option>Other</option>
+      </select>
+    </div>
+    <div class="field"><textarea class="input" id="reportNote" maxlength="500" placeholder="Anything else we should know? (optional)"></textarea></div>
+    <div class="stack">
+      <button class="btn btn-danger" id="reportSend">Send report</button>
+      <button class="btn btn-outline" data-close>Cancel</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+<script src="common.js"></script>
+<script>
+  const params = new URLSearchParams(location.search);
+  const otherUid = params.get("u");
+  const pseudoSeed = params.get("pseudo");
+  const pseudoMode = pseudoSeed !== null;
+  const hubMode = params.get("hub") === "1"; // Nairobi Expat Hub: needs a SEPARATE friend invite.
+  let myUid, me, other, cid, iBlocked = false, theyBlocked = false, invited = false, freeUsed = false, hubUnlocked = false, callUnlocked = false, redeemedPoints = 0, awardSince = Infinity, lastDay = "", lastSend = 0, msgCount = 0;
+  let pseudoSend = () => {};
+  let inviteContext = hubMode ? "hub" : "chat"; // which feature the invite sheet is unlocking
+  const s4 = $("#step4");
+  //s4.textContent = "Your new step 4 text here";
+  const lastie = sectionCode("chat").slice(-3);   // "150" / "160" / "170"
+  const lastieHub  = sectionCode("hub").slice(-3);    // "200" / "210" / "220"
+  const lastieCall = sectionCode("call").slice(-3);
+  
+  function applyInviteText() {
+    const h = $("#inviteSheet .invite-hero h3"), p = $("#inviteSheet .invite-hero p");
+    if (!h || !p) return;
+    if (inviteContext === "hub") { h.textContent = "Activate Nairobi Hub Account"; p.textContent = "Pay KSh " + lastieHub + " ($1.21) once via M-Pesa Buy Goods to activate your account."; s4.textContent = "Ksh " + lastieHub;}
+    else if (inviteContext === "call") { h.textContent = "Pay to anable video calls"; p.textContent = "Pay KSh " + lastieCall + " ($1.16) once via M-Pesa Buy Goods to anable video calls."; s4.textContent = "Ksh " + lastieCall;}
+    else { h.textContent = "Activate Your Account"; p.textContent = "Pay KSh " + lastie + " ($1.20) once via M-Pesa Buy Goods to activate your account."; s4.textContent = "Ksh " + lastie;}
+  }
+  function requestUnlock(ctx) { if (ctx) inviteContext = ctx; applyInviteText(); open("inviteSheet"); }
+  function setUnlockFlag() {
+    if (inviteContext === "hub") { hubUnlocked = true; try { ref("users/" + myUid + "/hubUnlocked").set(true); } catch (e) {} }
+    else if (inviteContext === "call") { callUnlocked = true; try { ref("users/" + myUid + "/callUnlocked").set(true); } catch (e) {} }
+    else markInvited();
+  }
+
+  // Video calls: FIRST need their own separate invite (ring 3s, then ask). Once that's done,
+  // they need 20 redeemed points OR a chat invite.
+  function canCall() { return redeemedPoints >= 20 || invited; }
+  function denyCall() {
+    toast("Video calls need 20 redeemed points or a friend invite.", true);
+    requestUnlock("chat");
+  }
+
+  // In-page "ringing" screen for ~3s (shows the user's own camera), then opens the video-call
+  // invite popup. Kept fully in-page so the popup ALWAYS appears after the ring.
+  function ringThenInvite(pName, pPhoto) {
+    const ov = document.createElement("div");
+    ov.style.cssText = "position:fixed;inset:0;z-index:300;background:#0b1120;color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;text-align:center;padding:24px";
+    const face = pPhoto
+      ? `<div style="width:120px;height:120px;border-radius:50%;overflow:hidden;background:#7c3aed"><img src="${esc(pPhoto)}" onerror="this.remove()" style="width:100%;height:100%;object-fit:cover;object-position:center 25%"></div>`
+      : `<div style="width:120px;height:120px;border-radius:50%;background:#7c3aed;display:grid;place-items:center;font-size:2.6rem;font-weight:800">${esc((pName[0] || "?").toUpperCase())}</div>`;
+    ov.innerHTML = `${face}<h2 style="margin:6px 0 0">${esc(pName)}</h2><p id="ringMsg" style="opacity:.85">Ringing…</p>
+      <video id="ringLocal" autoplay playsinline muted style="position:absolute;top:16px;right:16px;width:96px;height:132px;object-fit:cover;border-radius:12px;border:2px solid rgba(255,255,255,.6);transform:scaleX(-1);background:#273449"></video>`;
+    document.body.appendChild(ov);
+
+    let stream = null;
+    if (navigator.mediaDevices) {
+      navigator.mediaDevices.getUserMedia({ video: true, audio: true })
+        .then((s) => { stream = s; const v = ov.querySelector("#ringLocal"); if (v) v.srcObject = s; })
+        .catch(() => {});
+    }
+    setTimeout(() => { const m = ov.querySelector("#ringMsg"); if (m) m.textContent = "Call ended"; }, 3000);
+    setTimeout(() => {
+      try { stream && stream.getTracks().forEach((t) => t.stop()); } catch (e) {}
+      ov.remove();
+      requestUnlock("call");   // the invite popup opens right here, no page navigation
+    }, 3800);
+  }
+
+  // Gate for making or accepting any video call.
+  function beginCall(pName, pCountry, pPhoto, proceed) {
+    if (!callUnlocked) { ringThenInvite(pName, pPhoto); return; }
+    if (!canCall()) { denyCall(); return; }
+    proceed();
+  }
+
+  // Normal chats: one free message, then invite a friend. Expat-hub chats: a separate friend
+  // invite is required up front (invite a DIFFERENT friend than the one for normal chats).
+  function canSend() {
+    if (hubMode) { if (hubUnlocked) return true; requestUnlock("hub"); return false; }
+    if (invited) return true;
+    if (!freeUsed) return true;
+    requestUnlock("chat");
+    return false;
+  }
+  function consumeFree() {
+    if (hubMode || invited || freeUsed) return;
+    freeUsed = true;
+    try { ref("users/" + myUid + "/freeMsgUsed").set(true); } catch (e) {}
+  }
+  function markInvited() {
+    invited = true;
+    try { ref("users/" + myUid + "/hasInvited").set(true); } catch (e) {}
+  }
+
+  // Points: every reply the user sends (real or demo) earns 0.40–1.00 points, accumulated.
+  function startPoints() {
+    ref("users/" + myUid + "/points").on("value", (s) => {
+      const el = $("#ptsChip"); if (el) el.textContent = "$" + fmtPoints(s.val());
+    });
+    ref("users/" + myUid + "/redeemedPoints").on("value", (s) => { redeemedPoints = Number(s.val()) || 0; });
+  }
+  function awardReplyPoints() {
+    const amt = randomPoints();
+    awardPoints(myUid, amt);
+    const el = $("#ptsChip");
+    if (el) { el.classList.remove("bump"); void el.offsetWidth; el.classList.add("bump"); }
+    toast("+$" + amt.toFixed(2));
+  }
+
+  if (pseudoMode) { initPseudoChat(); }
+  else requireAuth().then(async ({ user, profile }) => {
+    myUid = user.uid; me = profile;
+    if (!otherUid || otherUid === myUid) { location.replace("members.html"); return; }
+    cid = chatIdFor(myUid, otherUid);
+
+    invited = !!(me && (me.chatUnlocked === true || me.hasInvited === true));
+    freeUsed = !!(me && me.freeMsgUsed === true);
+    hubUnlocked = !!(me && me.hubUnlocked === true);
+    callUnlocked = !!(me && me.callUnlocked === true);
+    applyInviteText();
+    $("#myCode").textContent = "9283776";//sectionCode(myUid, hubMode ? "hub" : "chat");
+    //const lastie = "chat";
+    //const lastieHub = "hub";
+    //const lastieCall = "call";
+    refreshComposer();
+    if (params.get("callinvite") === "1") setTimeout(() => requestUnlock("call"), 400);
+    startPoints();
+
+    const snap = await ref("users/" + otherUid).once("value");
+    other = snap.val();
+    if (!other) {
+      $("#headName").textContent = "Member not found";
+      setComposer(false, "This account no longer exists.");
+      return;
+    }
+    $("#headName").textContent = `${other.name} ${flag(other.country)}`;
+    $("#headAvatar").innerHTML = avatarHTML(other, otherUid, false);
+    renderProfileView();
+
+    let otherTyping = false;
+    const applyHeadStatus = () => {
+      const h = $("#headStatus");
+      if (otherTyping) { h.className = "status-text typing"; h.innerHTML = `typing <span class="typing-dots"><span></span><span></span><span></span></span>`; return; }
+      const st = statusLabel(lastOtherStatus);
+      h.className = "status-text" + (st.online ? " online" : "");
+      h.textContent = st.text;
+      const dot = $("#headAvatar .dot"); if (dot) dot.classList.toggle("online", st.online);
+    };
+    let lastOtherStatus = null;
+    ref("status/" + otherUid).on("value", (s) => { lastOtherStatus = s.val(); applyHeadStatus(); });
+    ref(`typing/${cid}/${otherUid}`).on("value", (s) => { otherTyping = s.val() === true; applyHeadStatus(); });
+
+    ref(`blocks/${myUid}/${otherUid}`).on("value", (s) => { iBlocked = s.exists(); updateBlockUI(); });
+    ref(`blocks/${otherUid}/${myUid}`).on("value", (s) => { theyBlocked = s.exists(); updateBlockUI(); });
+
+    // Clear my unread count if the conversation already exists
+    const uc = await ref(`userChats/${myUid}/${cid}`).once("value");
+    if (uc.exists()) ref(`userChats/${myUid}/${cid}/unread`).set(0);
+
+    awardSince = Date.now() - 2000; // only award for replies that arrive after this chat opens
+    ref("messages/" + cid).limitToLast(150).on("child_added", (s) => addMessage(s.val()));
+    setTimeout(() => { if (!msgCount) showStarters(); }, 900);
+  });
+
+  function addMessage(m) {
+    msgCount++;
+    $("#starters").classList.add("hidden");
+    const box = $("#msgs");
+    const day = new Date(m.at || Date.now()).toDateString();
+    if (day !== lastDay) {
+      lastDay = day;
+      const sep = document.createElement("div");
+      sep.className = "day-sep";
+      sep.textContent = day === new Date().toDateString() ? "Today" : new Date(m.at).toLocaleDateString();
+      box.appendChild(sep);
+    }
+    const el = document.createElement("div");
+    el.className = "msg " + (m.from === myUid ? "me" : "them");
+    el.innerHTML = `${esc(m.text)}<span class="t">${clock(m.at)}</span>`;
+    box.appendChild(el);
+    box.scrollTop = box.scrollHeight;
+    if (m.from !== myUid) {
+      if ((m.at || 0) >= awardSince) awardReplyPoints(); // points for replies received (new ones only)
+      if (document.visibilityState === "visible") ref(`userChats/${myUid}/${cid}/unread`).set(0);
+    }
+  }
+
+  function showStarters() {
+    const s = $("#starters");
+    s.innerHTML = CONVERSATION_STARTERS.map((t) => `<button class="chip">${esc(t)}</button>`).join("");
+    s.classList.remove("hidden");
+    s.onclick = (e) => { const b = e.target.closest(".chip"); if (b) { $("#text").value = b.textContent; $("#text").focus(); } };
+  }
+
+  async function send() {
+    const text = $("#text").value.trim();
+    if (!text || iBlocked || theyBlocked) return;
+    if (!canSend()) return;
+    if (Date.now() - lastSend < 700) return; // simple flood guard
+    lastSend = Date.now();
+    $("#text").value = ""; autoGrow();
+    setTyping(false);
+    consumeFree();
+
+    const key = ref("messages/" + cid).push().key;
+    const preview = text.length > 80 ? text.slice(0, 80) + "…" : text;
+    const updates = {};
+    updates[`messages/${cid}/${key}`] = { from: myUid, text, at: TS };
+    updates[`userChats/${myUid}/${cid}`] = { with: otherUid, last: preview, lastFrom: myUid, at: TS, unread: 0 };
+    updates[`userChats/${otherUid}/${cid}/with`] = myUid;
+    updates[`userChats/${otherUid}/${cid}/last`] = preview;
+    updates[`userChats/${otherUid}/${cid}/lastFrom`] = myUid;
+    updates[`userChats/${otherUid}/${cid}/at`] = TS;
+    updates[`userChats/${otherUid}/${cid}/unread`] = firebase.database.ServerValue.increment(1);
+    try { await db.ref(ROOT).update(updates); }
+    catch (e) { toast("Message not sent. Check your connection.", true); $("#text").value = text; }
+  }
+
+  function autoGrow() { const t = $("#text"); t.style.height = "auto"; t.style.height = Math.min(t.scrollHeight, 120) + "px"; }
+
+  // live typing presence (per chat + a global flag for the members list / landing page)
+  let typingOn = false, typingTimer = null;
+  function setTyping(on) {
+    if (on !== typingOn) {
+      typingOn = on;
+      ref(`typing/${cid}/${myUid}`).set(on);
+      ref(`status/${myUid}/typing`).set(on);
+    }
+    clearTimeout(typingTimer);
+    if (on) typingTimer = setTimeout(() => setTyping(false), 3000);
+  }
+  function onType() {
+    autoGrow();
+    if (pseudoMode) return;
+    if (!iBlocked && !theyBlocked) setTyping($("#text").value.trim().length > 0);
+  }
+  $("#text").addEventListener("keydown", (e) => {
+    if (e.key === "Enter" && !e.shiftKey && window.innerWidth > 700) { e.preventDefault(); pseudoMode ? pseudoSend() : send(); }
+  });
+  $("#text").addEventListener("input", onType);
+  $("#text").addEventListener("blur", () => { if (!pseudoMode) setTyping(false); });
+  $("#sendBtn").onclick = () => { pseudoMode ? pseudoSend() : send(); };
+  window.addEventListener("pagehide", () => { if (!pseudoMode) setTyping(false); });
+
+  function setComposer(enabled, note) {
+    $("#composer").classList.toggle("hidden", !enabled);
+    $("#lockBar").classList.add("hidden");
+    $("#blockedNote").classList.toggle("hidden", enabled);
+    if (note) $("#blockedNote").textContent = note;
+  }
+  function refreshComposer() {
+    const blocked = iBlocked || theyBlocked;
+    // Composer is always usable unless the member is blocked. The one-free-message rule in
+    // canSend() handles the invite nudge, so there's no read-only lock on the box any more.
+    $("#composer").classList.toggle("hidden", blocked);
+    $("#lockBar").classList.add("hidden");
+    const t = $("#text"); t.readOnly = false; t.placeholder = "Type a message…";
+    $("#lockHint").classList.add("hidden");
+    const blockNote = iBlocked ? "You blocked this member. Unblock from the ⋯ menu to chat again."
+      : theyBlocked ? "You can't message this member." : "";
+    $("#blockedNote").classList.toggle("hidden", blockNote === "");
+    if (blockNote) $("#blockedNote").textContent = blockNote;
+  }
+  function updateBlockUI() {
+    $("#blockBtn").textContent = iBlocked ? "✅ Unblock" : "🚫 Block";
+    refreshComposer();
+  }
+
+  function renderProfileView() {
+    $("#profileView").innerHTML = `<div class="member" style="margin-bottom:6px">
+      ${avatarHTML(other, otherUid)}
+      <div class="info">
+        <div class="name">${esc(other.name)} ${flag(other.country)}</div>
+        <div class="status-text">${esc(countryName(other.country))} · joined ${other.createdAt ? new Date(other.createdAt).toLocaleDateString() : ""}</div>
+        ${other.bio ? `<p class="bio">${esc(other.bio)}</p>` : ""}
+        <div class="lang-row"><b>Speaks:</b> ${esc((other.speaks || []).join(", "))}</div>
+        <div class="lang-row"><b>Learning:</b> ${esc((other.learning || []).join(", "))}</div>
+      </div></div>`;
+  }
+
+  // Sheets
+  let sheetGuardUntil = 0;
+  const open = (id) => { $("#" + id).classList.add("show"); sheetGuardUntil = Date.now() + 400; };
+  const closeAll = () => $$(".sheet-bg").forEach((s) => s.classList.remove("show"));
+  $("#menuBtn").onclick = () => open("menu");
+
+  $("#callBtn").onclick = () => {
+    if (!other || iBlocked || theyBlocked) { toast("You can't call this member.", true); return; }
+    beginCall(other.name, other.country, "", async () => {
+      const callId = ref("calls").push().key;
+      try {
+        await ref("calls/" + callId).set({
+          caller: myUid, callerName: me.name, callee: otherUid, calleeName: other.name,
+          status: "ringing", at: TS
+        });
+        await ref("ring/" + otherUid).set({ callId, caller: myUid, callerName: me.name });
+        location.href = "call.html?id=" + encodeURIComponent(callId) + "&role=caller";
+      } catch (e) { toast("Couldn't start the call.", true); }
+    });
+  };
+  $$("[data-close]").forEach((b) => b.onclick = closeAll);
+  // The guard ignores the stray click from the same tap that opened the sheet (which was
+  // closing it immediately), while still allowing a genuine tap on the backdrop to close it.
+  $$(".sheet-bg").forEach((bg) => bg.onclick = (e) => { if (e.target === bg && Date.now() > sheetGuardUntil) closeAll(); });
+
+  // Invite / unlock
+  $("#lockBtn").onclick = () => open("inviteSheet");
+  $("#copyCode").onclick = () => {
+    navigator.clipboard?.writeText("9283776");   // ← the code you want copied (change freely)
+    toast("Till number copied!");
+    // popup stays open; unlocking happens only after a valid paste below
+  };
+  $("#shareCode").onclick = () => {
+    const data = { title: "Amoriva", text: `Join me on Amoriva! Use my invite code: ${$("#myCode").textContent}`, url: location.origin + "/index.html" };
+    if (navigator.share) navigator.share(data).then(() => { setUnlockFlag(); closeAll(); }).catch(() => {});
+    else { navigator.clipboard?.writeText(data.text + " " + data.url); toast("Invite copied"); setUnlockFlag(); closeAll(); }
+  };
+  $("#unlockBtn").onclick = () => {
+    const v = ($("#inviteInput").value || "").trim().toLowerCase();
+    if (!v.includes("remote")) { toast("That code isn't valid.", true); return; }  // ← keyword, case-insensitive
+    setUnlockFlag();
+    closeAll();   // closes only now
+    if (inviteContext === "call") { toast("Video calls unlocked — tap 📹 to try again."); return; }
+    if (inviteContext === "hub")  { toast("Expat Hub unlocked — enjoy chatting!"); return; }
+    refreshComposer();
+    toast("Unlocked — chat as much as you like!");
+  };
+
+  $("#blockBtn").onclick = async () => {
+    const r = ref(`blocks/${myUid}/${otherUid}`);
+    if (iBlocked) { await r.remove(); toast("Unblocked"); }
+    else if (confirm(`Block ${other.name}? They won't be able to message you.`)) { await r.set(true); toast("Blocked"); }
+    closeAll();
+  };
+  $("#reportOpen").onclick = () => { closeAll(); open("reportSheet"); };
+  $("#reportSend").onclick = async () => {
+    try {
+      await ref("reports").push({ by: myUid, against: otherUid, chatId: cid,
+        reason: $("#reason").value, note: $("#reportNote").value.trim(), at: TS });
+      closeAll(); toast("Thanks — report sent. You can also block this member.");
+    } catch (e) { toast("Couldn't send report.", true); }
+  };
+
+  /* ---------- Pseudo (demo) chat ---------- */
+  function addPseudoMsg(text, mine) {
+    msgCount++;
+    $("#starters").classList.add("hidden");
+    const box = $("#msgs");
+    const el = document.createElement("div");
+    el.className = "msg " + (mine ? "me" : "them");
+    el.innerHTML = `${esc(text)}<span class="t">${clock(Date.now())}</span>`;
+    box.appendChild(el);
+    box.scrollTop = box.scrollHeight;
+  }
+
+  async function initPseudoChat() {
+    const { user, profile } = await requireAuth();
+    myUid = user.uid; me = profile;
+    invited = !!(me && (me.chatUnlocked === true || me.hasInvited === true));
+    freeUsed = !!(me && me.freeMsgUsed === true);
+    hubUnlocked = !!(me && me.hubUnlocked === true);
+    callUnlocked = !!(me && me.callUnlocked === true);
+    applyInviteText();
+    $("#myCode").textContent = "9283776";//sectionCode(myUid, hubMode ? "hub" : "chat");
+    //const lastie = "chat";
+    //const lastieHub = "hub";
+    //const lastieCall = "call";
+    startPoints();
+    if (params.get("callinvite") === "1") setTimeout(() => requestUnlock("call"), 400);
+    const name = params.get("pn") || "Member";
+    const country = params.get("pc") || "";
+    const seed = parseInt(pseudoSeed, 10) || 0;
+    const photo = params.get("pp") || ("assets/pseudo" + (seed + 1) + ".jpeg");
+    other = { name, country, speaks: [], learning: [] };
+
+    // Header
+    $("#headName").innerHTML = `${esc(name)} ${flag(country)}`;
+    $("#headAvatar").innerHTML = avatarHTML({ name, photo }, name, true);
+    const headOnline = () => { const h = $("#headStatus"); h.className = "status-text online"; h.textContent = "Online"; };
+    headOnline();
+
+    const startPseudoCall = () => beginCall(name, country, photo, () => {
+      location.href = "call.html?pseudo=" + encodeURIComponent(seed) + (hubMode ? "&hub=1" : "") +
+        "&pn=" + encodeURIComponent(name) + "&pc=" + encodeURIComponent(country) + "&pp=" + encodeURIComponent(photo);
+    });
+    $("#callBtn").onclick = startPseudoCall;
+    window.startPseudoCall = startPseudoCall;
+    $("#blockBtn").style.display = "none";
+    $("#reportOpen").style.display = "none";
+    $("#profileView").innerHTML = `<div class="member" style="margin-bottom:6px">
+      ${avatarHTML({ name, photo }, name, true)}
+      <div class="info">
+        <div class="name">${esc(name)} ${flag(country)} <span class="tag" style="background:#fde68a;color:#92400e;font-weight:800">PSEUDO</span></div>
+        <div class="status-text">${esc(countryName(country))} · New member</div>
+        <p class="bio">Your privacy is highly protected. Invite your friends to chat with other members.</p>
+      </div></div>`;
+
+    $("#composer").classList.remove("hidden");
+    const t = $("#text"); t.readOnly = false; t.placeholder = "Type a message…";
+    $("#lockHint").classList.add("hidden");
+
+    const box = $("#msgs");
+    const banner = document.createElement("div");
+    banner.className = "notice";
+    banner.style.cssText = "background:#fde68a;color:#92400e;font-weight:600";
+    banner.innerHTML = `💛 You are now chatting with <b>${esc(name)}</b>. Your privacy is highly protected.`;
+    box.appendChild(banner);
+
+    const lines = pseudoChatScript(seed, name, country, (me && me.name) || "friend");
+    let li = 0, awaiting = false;
+    const botFirst = seed % 2 === 0;
+
+    const pcRef = ref("pseudoChats/" + myUid + "/" + seed);
+    function savePseudoMsg(from, text) {
+      const preview = text.length > 80 ? text.slice(0, 80) + "…" : text;
+      const key = pcRef.child("msgs").push().key;
+      const updates = {};
+      updates["msgs/" + key] = { from, text, at: TS };
+      updates["last"] = preview; updates["lastFrom"] = from; updates["at"] = TS; updates["li"] = li;
+      updates["name"] = name; updates["country"] = country; updates["photo"] = photo;
+      pcRef.update(updates);
+    }
+
+    function botSay() {
+      if (li >= lines.length || awaiting) return;
+      awaiting = true;
+      const line = lines[li];
+      const h = $("#headStatus");
+      const delay = Math.min(4500, 1600 + line.length * 35);
+      setTimeout(() => {
+        h.className = "status-text typing";
+        h.innerHTML = `typing <span class="typing-dots"><span></span><span></span><span></span></span>`;
+      }, 350);
+      setTimeout(() => {
+        addPseudoMsg(line, false); li++;
+        savePseudoMsg("them", line);
+        awardReplyPoints();
+        headOnline();
+        awaiting = false;
+      }, delay);
+    }
+
+    pseudoSend = () => {
+      const text = $("#text").value.trim();
+      if (!text || awaiting) return;
+      if (!canSend()) return;
+      $("#text").value = ""; autoGrow();
+      addPseudoMsg(text, true);
+      savePseudoMsg("me", text);
+      consumeFree();
+      botSay();
+    };
+
+    const existing = (await pcRef.once("value")).val();
+    if (existing && existing.msgs) {
+      Object.values(existing.msgs).sort((a, b) => (a.at || 0) - (b.at || 0))
+        .forEach((m) => addPseudoMsg(m.text, m.from === "me"));
+      li = existing.li || 0;
+    } else if (botFirst) {
+      setTimeout(botSay, 700);
+    } else {
+      setTimeout(() => $("#starters") && showStarters(), 700);
+    }
+
+    // Only the FIRST TWO distinct demo members (across the whole app) request a video call, once
+    // each. callReqTotal is a per-user global counter; callReqDone marks this pseudo as done.
+    const callReqTotal = (me && me.callReqTotal) || 0;
+    if (!(existing && existing.callReqDone) && callReqTotal < 2) {
+      setTimeout(() => {
+        try { pcRef.child("callReqDone").set(true); } catch (e) {}
+        try { ref("users/" + myUid + "/callReqTotal").set(firebase.database.ServerValue.increment(1)); } catch (e) {}
+        const box = $("#msgs");
+        const ic = document.createElement("div");
+        ic.className = "notice";
+        ic.style.cssText = "background:#dcfce7;color:#15803d;font-weight:700;display:flex;align-items:center;gap:10px;justify-content:space-between;flex-wrap:wrap";
+        ic.innerHTML = `<span>📹 ${esc(name)} is requesting a video call…</span>`;
+        const wrap = document.createElement("span"); wrap.style.cssText = "display:flex;gap:6px";
+        const accept = document.createElement("button"); accept.className = "btn btn-green btn-sm"; accept.textContent = "Accept";
+        const later = document.createElement("button"); later.className = "btn btn-outline btn-sm"; later.textContent = "Later";
+        wrap.appendChild(accept); wrap.appendChild(later); ic.appendChild(wrap);
+        box.appendChild(ic); box.scrollTop = box.scrollHeight;
+        accept.onclick = () => { ic.remove(); startPseudoCall(); };
+        later.onclick = () => ic.remove();
+      }, 12000);
+    }
+  }
+</script>
+</body>
+</html>

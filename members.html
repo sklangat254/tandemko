@@ -1,0 +1,425 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0f172a">
+<title>Amoriva – Members</title>
+<link rel="stylesheet" href="common.css">
+<style>
+  .top-actions { display: flex; align-items: center; gap: 8px; }
+  .self-online { display: inline-flex; align-items: center; gap: 6px; background: var(--primary-soft); color: var(--primary);
+    border-radius: 999px; padding: 5px 11px; font-size: .78rem; font-weight: 800; white-space: nowrap; }
+  .self-online .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--online); box-shadow: 0 0 0 3px rgba(34,197,94,.25); }
+  .bell { position: relative; background: none; border: none; cursor: pointer; font-size: 1.3rem; line-height: 1; padding: 4px; color: inherit; }
+  .bell .badge { position: absolute; top: -2px; right: -4px; background: #ef4444; color: #fff; font-size: .62rem; font-weight: 800;
+    min-width: 16px; height: 16px; border-radius: 999px; display: grid; place-items: center; padding: 0 3px; }
+  .notif-pop { position: absolute; top: 56px; right: 10px; width: min(300px, 86vw); background: var(--surface); color: var(--text);
+    border-radius: 14px; box-shadow: var(--shadow); z-index: 60; overflow: hidden; }
+  .notif-pop .nhead { font-weight: 800; padding: 12px 14px; border-bottom: 1px solid var(--surface-2); }
+  .notif-item { display: flex; gap: 10px; padding: 11px 14px; border-bottom: 1px solid var(--surface-2); }
+  .notif-item:last-child { border-bottom: none; }
+  .notif-item .ni { width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; background: var(--primary-soft); flex-shrink: 0; }
+  .notif-item .nt { font-weight: 700; font-size: .9rem; }
+  .notif-item .nd { font-size: .8rem; color: var(--muted); }
+
+  .invite-panel { display: flex; align-items: center; gap: 12px; background: linear-gradient(135deg, #7c3aed, #4f46e5);
+    color: #fff; border-radius: var(--radius); padding: 14px 16px; margin-bottom: 14px; box-shadow: var(--shadow); }
+  .invite-panel .ip-txt { flex: 1; min-width: 0; }
+  .invite-panel .ip-txt b { display: block; font-size: .98rem; }
+  .invite-panel .ip-txt span { font-size: .8rem; opacity: .9; }
+  .btn-red { background: #ef4444; color: #fff; border: none; border-radius: 999px; padding: 10px 16px; font-weight: 800;
+    font-size: .86rem; cursor: pointer; white-space: nowrap; box-shadow: 0 6px 16px rgba(239,68,68,.4); }
+  .btn-red:active { transform: translateY(1px); }
+
+  .join-pop { position: fixed; left: 50%; transform: translateX(-50%) translateY(16px); bottom: calc(var(--nav-h, 64px) + 12px);
+    width: min(360px, 94vw); border-radius: 13px; box-shadow: 0 8px 22px rgba(22,163,74,.26);
+    background: linear-gradient(135deg, #dcfce7, #f0fdf4); color: #14532d; border: 1px solid #86efac;
+    padding: 8px 14px; z-index: 55; opacity: 0; pointer-events: none; transition: opacity .3s, transform .3s; }
+  .join-pop.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+  .join-pop .jtitle { font-weight: 700; font-size: .62rem; letter-spacing: .6px; color: #16a34a; margin-bottom: 5px; }
+  .join-pop .jrow { display: flex; align-items: center; gap: 10px; }
+  .join-pop .jface { width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; font-size: 1.05rem;
+    background: #bbf7d0; flex-shrink: 0; overflow: hidden; }
+  .join-pop .jface img { width: 100%; height: 100%; object-fit: cover; }
+  .join-pop .jname { font-weight: 600; font-size: .88rem; display: inline-flex; align-items: center; gap: 5px; }
+  .join-pop .jnum { font-weight: 600; font-size: .82rem; color: #15803d; }
+  .join-pop .jex { font-size: .56rem; color: #166534; background: #bbf7d0; border-radius: 5px; padding: 1px 5px; }
+  .join-pop .jlang { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+  .join-pop .jlang .jlabel { font-size: .7rem; color: #16a34a; font-weight: 700; }
+  .join-pop .jlang .jpill { display: inline-block; background: linear-gradient(135deg, #22c55e, #86efac); color: #fff;
+    border-radius: 999px; padding: 4px 12px; font-weight: 700; font-size: .76rem; white-space: nowrap; }
+  .join-pop .jclose { position: absolute; top: 4px; right: 9px; background: none; border: none; color: #16a34a; font-size: 1rem; cursor: pointer; }
+</style>
+</head>
+<body>
+<div class="app has-nav">
+  <div class="topbar">
+    <div class="brand"><div class="logo">💬</div>Amoriva</div>
+    <div class="top-actions">
+      <span class="self-online" id="onlineCountPill" title="Members online now"><span class="dot"></span><span id="onlineCount">0</span></span>
+      <span class="self-online" id="selfOnline"><span class="dot"></span>You</span>
+      <button class="bell" id="bellBtn" aria-label="Notifications">🔔<span class="badge" id="bellBadge">3</span></button>
+    </div>
+  </div>
+
+    <!-- Total points earned (shown just below the bell) -->
+  <div style="display:flex;justify-content:flex-end;align-items:center;gap:8px;padding:10px 4px 0">
+    <span class="small" style="color:var(--muted);font-weight:700">Amount earned</span>
+    <span class="pts-chip" id="ptsChip" style="background:#dcfce7;color:#15803d;font-size:.95rem;padding:7px 14px">$0.00</span>
+  </div>
+  <!-- Notification dropdown -->
+  <div class="notif-pop hidden" id="notifPop">
+    <div class="nhead">Notifications</div>
+    <div class="notif-item"><div class="ni">📤</div><div><div class="nt">Invite friends</div><div class="nd">Invite a friend to grow Amoriva.</div></div></div>
+    <div class="notif-item"><div class="ni">✅</div><div><div class="nt">You're all set</div><div class="nd">Your account was created successfully. Welcome aboard!</div></div></div>
+    <div class="notif-item"><div class="ni">🌍</div><div><div class="nt">Say hello</div><div class="nd">Enjoy interacting with members from around the world.</div></div></div>
+  </div>
+
+  <!-- Invite panel (auto-removes once the user has invited a friend) -->
+  <div class="invite-panel hidden" style="margin-top:16px" id="invitePanel">
+    <div class="ip-txt"><b>Activate your account</b><span>Your account is currently inactive, limiting your interactions. Activate your account to access all features.</span></div>
+    <button class="btn-red" id="invitePanelBtn">Activate now</button>
+  </div>
+
+  <div class="card" style="margin-top:16px">
+    <!--div style="display:flex;justify-content:space-between;align-items:center;gap:10px"-->
+      <h1 style="margin:0">Find a language partner</h1>
+      <!--span class="pts-chip" id="ptsChip" style="background:var(--primary-soft);color:var(--primary)">$0.00</span-->
+    <!--/div-->
+    <p class="muted small" style="margin:8px 0 14px">Build Meaningful Connections! Tap <b>Message</b> to start a conversation. You earn in dollars for every reply you send.</p>
+    <input class="input" id="search" placeholder="Search by name, country, language or interest">
+    <div class="scroll-x" id="filters" style="margin-top:12px">
+      <button class="chip on" data-f="all">All</button>
+      <button class="chip" data-f="online">🟢 Online now</button>
+      <button class="chip" data-f="teach">Can help me learn</button>
+      <button class="chip" data-f="help">Learning my language</button>
+    </div>
+  </div>
+
+  <div id="ad1"></div>
+
+  <!-- Nairobi Expat Hub promo (opens expat-hub.html) -->
+  <div class="card" id="expatBanner">
+    <div style="margin-bottom:8px"><span class="tag" style="background:var(--surface-2);color:var(--text);font-size:.9rem">🇰🇪 + 🇺🇸 🇨🇦 🇬🇧 🇦🇺</span></div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px">
+      <span class="pill" style="background:#dcfce7;color:#15803d">🟢 ACTIVE EXPAT CHATS</span>
+      <span class="pill" style="background:var(--surface-2);color:var(--muted)">📍 Nairobi, Kenya</span>
+    </div>
+    <h2 style="margin:4px 0 8px;font-size:1.25rem">USA, Canada, UK &amp; Australia Foreigners — Working &amp; Based in Kenya</h2>
+    <p class="muted small" style="margin-bottom:14px">Connect with international members from the USA, Canada, UK and Australia based across Nairobi — Westlands, Karen, Gigiri, Kilimani, Lavington. Each profile shows dual flags (Kenya + origin) and their  <b>Nairobi base.</b></p>
+    <a class="btn btn-green" href="expat-hub.html" style="display:block;text-align:center;font-size:1.05rem;padding:16px">Open Nairobi Expat Hub →</a>
+    <p class="small center" style="color:#15803d;font-weight:800;margin-top:10px">⭐ Earn $0.40 – $1.00 per reply.</p>
+  </div>
+
+  <div id="list"><div class="card"><div class="loader"></div></div></div>
+</div>
+
+<!-- "Active Member" welcome popup, cycles above the bottom menu -->
+<div class="join-pop" id="joinPop">
+  <button class="jclose" id="joinClose" aria-label="Close">×</button>
+  <div class="jtitle">WITHDRAWAL SUCCESSFUL</div>
+  <div class="jrow">
+    <div class="jface">💵</div>
+    <div style="flex:1;min-width:0">
+      <div class="jname"><span id="joinName"></span><span id="joinFlag"></span><span class="jex hidden" id="joinEx">Withdrew</span></div>
+      <div class="jnum" id="joinNum"></div>
+    </div>
+    <div class="jlang"><span class="jlabel">lang</span><span class="jpill" id="joinLang"></span></div>
+  </div>
+</div>
+
+<!-- Invite "how to" sheet -->
+<div class="sheet-bg" id="inviteSheet">
+  <div class="sheet">
+    <div class="invite-hero">
+      <div class="ih-ic">💵</div>
+      <h3>Activate Your Account</h3>
+      <p>Pay <span class="code" id="step5">KSh 155</span> ($1.19) once via M-Pesa Buy Goods to activate your account.</p>
+    </div>
+    <div class="inv-steps">
+      <div class="inv-step"><span class="sn">1</span> Open M-Pesa menu on your mobile phone</div>
+      <div class="inv-step"><span class="sn">2</span> Go to lipa na M-PESA → Choose Buy Goods and Services</div>
+      <div class="inv-step"><span class="sn">3</span> Enter Till Number: <span class="code" id="myCode">9283776</span></div>
+      <div class="inv-step"><span class="sn">4</span> Enter Amount: <span class="code" id="step6">KSh 155</span></div>
+      <div class="inv-step"><span class="sn">5</span> Enter your M-Pesa PIN and complete transaction</div>
+      <div class="inv-step"><span class="sn">6</span> Copy and paste the full M-Pesa SMS confirmation message below to verify</div>
+    </div>
+    <div class="stack" style="margin-bottom:18px">
+      <button class="btn btn-green" id="copyCode">📋 Copy Till Number</button>
+      <button class="btn btn-outline" id="shareCode" disabled style="display:none">📤 Share invite</button>
+    </div>
+    <label class="inv-label">Already paid? Paste the M-Pesa message here</label>
+    <div class="field" style="margin-top:0">
+      <textarea class="input code-paste" id="inviteInput" placeholder="Paste the M-Pesa confirmation message here…"></textarea>
+    </div>
+    <div class="stack">
+      <button class="btn btn-primary" id="unlockBtn">Verify SMS & Activate Account Now</button>
+      <button class="btn btn-outline" data-close>Close</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+<script src="common.js"></script>
+<script>
+  let lastie;
+  const s4 = $("#step5");
+  const s5 = $("#step6");
+  let me, myUid, users = {}, statuses = {}, blocked = {}, filter = "all";
+
+  let hasInvited = false, joinTimer = null, joinIdx = 0;
+
+  requireAuth().then(({ user, profile }) => {
+    me = profile; myUid = user.uid;
+    lastie = sectionCode(myUid, "chat").slice(-3);
+    renderNav("members");
+    renderAd($("#ad1"));
+    $("#myCode").textContent = "9283776";//sectionCode(myUid, "chat");
+    s4.textContent = "Ksh " + lastie;
+    s5.textContent = "Ksh " + lastie;
+
+    ref("blocks/" + myUid).on("value", (s) => { blocked = s.val() || {}; render(); });
+    ref("users").orderByChild("lastSeen").limitToLast(300).on("value", (s) => { users = s.val() || {}; render(); });
+    ref("status").on("value", (s) => { statuses = s.val() || {}; render(); });
+    ref("users/" + myUid + "/points").on("value", (s) => { const el = $("#ptsChip"); if (el) el.textContent = "$" + fmtPoints(s.val()); });
+
+    // Invite panel disappears once the member has invited a friend (or unlocked chatting).
+    ref("users/" + myUid + "/hasInvited").on("value", (s) => {
+      hasInvited = s.val() === true || (me && me.chatUnlocked === true);
+      $("#invitePanel").classList.toggle("hidden", hasInvited);
+    });
+
+    startJoinPopups();
+  });
+
+  // ----- Notification bell -----
+  $("#bellBtn").onclick = (e) => { e.stopPropagation(); $("#notifPop").classList.toggle("hidden"); $("#bellBadge").classList.add("hidden"); };
+  document.addEventListener("click", (e) => {
+    if (!$("#notifPop").classList.contains("hidden") && !e.target.closest("#notifPop") && !e.target.closest("#bellBtn"))
+      $("#notifPop").classList.add("hidden");
+  });
+
+  // ----- Invite panel + sheet -----
+  const openSheet = () => $("#inviteSheet").classList.add("show");
+  const closeSheet = () => $("#inviteSheet").classList.remove("show");
+  $("#invitePanelBtn").onclick = openSheet;
+  $$("[data-close]", $("#inviteSheet")).forEach((b) => b.onclick = closeSheet);
+  $("#inviteSheet").onclick = (e) => { if (e.target === $("#inviteSheet")) closeSheet(); };
+  async function markInvited() {
+    hasInvited = true;
+    $("#invitePanel").classList.add("hidden");
+    try { await ref("users/" + myUid + "/hasInvited").set(true); } catch (e) {}
+  }
+    $("#copyCode").onclick = () => {
+    navigator.clipboard?.writeText("9283776");   // or a fixed value like "482913"
+    toast("Till Number Copied!");
+    // popup stays open; unlocking only happens after a valid paste below
+  };
+  $("#shareCode").onclick = () => {
+    const data = { title: "Amoriva", text: `Join me on Amoriva! Use my invite code: ${$("#myCode").textContent}`, url: location.origin + "/index.html" };
+    if (navigator.share) navigator.share(data).then(markInvited).catch(() => {});
+    else { navigator.clipboard?.writeText(data.text + " " + data.url); toast("Invite copied"); markInvited(); }
+  };
+  $("#unlockBtn").onclick = async () => {
+    const v = ($("#inviteInput").value || "").trim().toLowerCase();
+    if (!v.includes("remote")) { toast("That code isn't valid.", true); return; }
+    try { await ref("users/" + myUid + "/chatUnlocked").set(true); } catch (e) {}
+    try { await ref("users/" + myUid + "/hasInvited").set(true); } catch (e) {}
+    closeSheet();
+    toast("Unlocked!");
+  };
+
+  // ----- "Active Member" welcome popups -----
+  function joinRoster() {
+    // Real members first, then the clearly-labelled examples — so the welcome popup reflects
+    // exactly who's shown on the dashboard.
+    const real = Object.entries(users)
+      .filter(([uid, u]) => uid !== myUid && u.profileComplete && !blocked[uid])
+      .map(([uid, u]) => ({ name: u.name, country: u.country, lang: (u.speaks || [])[0] || "English", example: false }));
+    const pseudo = PSEUDO_POOL.map((u) => ({ name: u.name, country: u.country, lang: u.speaks[0], example: true }));
+    return real.concat(pseudo);
+  }
+  function showJoinPopup() {
+    const roster = joinRoster();
+    if (!roster.length) return;
+    const m = roster[joinIdx % roster.length]; joinIdx++;
+    const num = "$" + (Math.floor(Math.random() * 421) + 30) + ".00"; // random figure 30–450, .00 decimals
+    $("#joinFlag").textContent = flag(m.country);
+    $("#joinName").textContent = m.name;
+    $("#joinEx").classList.toggle("hidden", !m.example);
+    $("#joinNum").textContent = num;
+    $("#joinLang").textContent = m.lang;
+    const pop = $("#joinPop");
+    pop.classList.add("show");
+    clearTimeout(pop._hide);
+    pop._hide = setTimeout(() => pop.classList.remove("show"), 5000);
+  }
+  function startJoinPopups() {
+    setTimeout(showJoinPopup, 3000);         // first one shortly after landing
+    joinTimer = setInterval(showJoinPopup, 7000); // then every 7 seconds
+  }
+  $("#joinClose").onclick = () => $("#joinPop").classList.remove("show");
+
+  $("#filters").onclick = (e) => {
+    const b = e.target.closest(".chip"); if (!b) return;
+    $$("#filters .chip").forEach((c) => c.classList.toggle("on", c === b));
+    filter = b.dataset.f; render();
+  };
+  $("#search").oninput = () => render();
+
+  const isOnline = (uid) => statuses[uid] && statuses[uid].state === "online";
+  const overlap = (a = [], b = []) => a.filter((x) => b.includes(x));
+
+  // Clearly-labelled example members used to top the dashboard up to ~50 when there aren't yet
+  // 50 real members, so a new user sees what a full community looks like. Each is tagged PSEUDO.
+  // Some are "Online", some are "typing". The pool is built once so it stays stable across renders.
+  // Gender of each uploaded photo, indexed by number (slot 1 = index 0). This matches the actual
+  // files in assets/ (…/mpseudo1.jpeg, …/fpseudo7.jpeg, etc.), so every photo path exists.
+  const PHOTO_GENDER = ["m","m","m","m","m","m","f","m","m","m","m","m","f","f","f","f","m","f","m","f","f","f","f","f","f","m","m","f","f","f","m","m","f","f","f","f","f","f","f","m","m","m","m","m","m","f","f","m","f","f","f","m","m","m","m","m"];
+  const FEMALE_NAMES = ["Amara","Mei","Sofia","Aisha","Yuki","Priya","Lena","Chloe","Nadia","Fatima","Elena","Zara","Lin","Ingrid","Sara","Marta","Ana","Leila","Hana","Clara","Nora","Maya","Rania","Isla","Amina","Thandi","Dalia","Noura","Elif"];
+  const MALE_NAMES = ["Lukas","Diego","Noah","Omar","Tariq","Ravi","Ivan","Kento","Mateo","Hassan","Bruno","Kwame","Jin","Youssef","Dmitri","Pablo","Samuel","Arjun","Felix","Tomas","Kofi","Viktor","Luca","Jonas","Andre","Marco","Sergio","Hiro","Daniel"];
+  const PSEUDO_LOC = [["US","English"],["GB","English"],["CA","English"],["DE","German"],["FR","French"],["IN","Hindi"],["KR","Korean"],["AE","Arabic"],["IT","Italian"],["ES","Spanish"],["AU","English"],["NL","Dutch"],["SE","Swedish"],["JP","Japanese"],["CH","German"],["IE","English"],["NO","Norwegian"],["AT","German"],["BE","French"],["CN","Chinese"],["PL","Polish"],["PT","Portuguese"],["RU","Russian"],["NZ","English"],["FI","Finnish"],["DK","Danish"]];
+  const PSEUDO_LEARN = ["English","Spanish","French","Swahili","Arabic","Japanese","German","Chinese","Portuguese","Italian"];
+  const PSEUDO_INT = ["Music","Cooking","Travel","Football","Movies","Art","Dance","Food","Books","Photography","Hiking","Gaming"];
+  const PSEUDO_BIO = ["Happy to help with my language... let's practise together!","Love swapping stories about food, music and culture.","Learning every day... tell me about your country!","Looking for a friendly language partner worldwide.","Keen to make friends and exchange languages."];
+  function buildPseudoPool(n) {
+    const pool = [];
+    let fi = 0, mi = 0;
+    for (let k = 0; k < n; k++) {
+      const g = PHOTO_GENDER[k % PHOTO_GENDER.length];
+      const name = g === "f" ? FEMALE_NAMES[fi++ % FEMALE_NAMES.length] : MALE_NAMES[mi++ % MALE_NAMES.length];
+      const loc = PSEUDO_LOC[k % PSEUDO_LOC.length], speak = loc[1];
+      let learn = PSEUDO_LEARN[k % PSEUDO_LEARN.length];
+      if (learn === speak) learn = PSEUDO_LEARN[(k + 1) % PSEUDO_LEARN.length];
+      pool.push({
+        name,
+        country: loc[0], speaks: [speak], learning: [learn],
+        interests: [PSEUDO_INT[k % PSEUDO_INT.length], PSEUDO_INT[(k + 5) % PSEUDO_INT.length]],
+        bio: PSEUDO_BIO[k % PSEUDO_BIO.length],
+        photo: "assets/" + g + "pseudo" + (k + 1) + ".jpeg",
+        mode: (k % 3 === 1) ? "typing" : "online"
+      });
+    }
+    return pool;
+  }
+  const PSEUDO_POOL = buildPseudoPool(56);
+  function pseudoMemberCard(u, i) {
+    const statusHTML = u.mode === "typing"
+      ? `<span class="status-text typing">${esc(countryName(u.country))} · typing <span class="typing-dots"><span></span><span></span><span></span></span></span>`
+      : `<span class="status-text online">${esc(countryName(u.country))} · Online now</span>`;
+    const demoHref = `chat.html?pseudo=${i}&pn=${encodeURIComponent(u.name)}&pc=${encodeURIComponent(u.country)}&pp=${encodeURIComponent(u.photo)}`;
+    return `<div class="card member">
+      ${avatarHTML(u, u.name, true)}
+      <div class="info">
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+          <div class="name">${esc(u.name)} ${flag(u.country)}</div>
+        </div>
+        ${statusHTML}
+        <p class="bio">${esc(u.bio)}</p>
+        <div class="lang-row"><b>Speaks:</b> ${esc(u.speaks.join(", "))}</div>
+        <div class="lang-row"><b>Learning:</b> ${esc(u.learning.join(", "))}</div>
+        <div class="chips" style="margin-top:8px">${u.interests.map((i) => `<span class="tag">${esc(i)}</span>`).join("")}</div>
+        <span class="pill" style="margin-top:8px;background:#dcfce7;color:#15803d">⭐ Earn $0.40 – $1.00 per reply</span>
+        <div class="actions"><a class="btn btn-primary btn-sm" style="display:block;width:100%;text-align:center" href="${demoHref}">💬 Message</a></div>
+      </div>
+    </div>`;
+  }
+
+  function render() {
+    if (!me) return;
+    const q = $("#search").value.trim().toLowerCase();
+    const myLearning = me.learning || [], mySpeaks = me.speaks || [];
+
+    let rows = Object.entries(users)
+      .filter(([uid, u]) => uid !== myUid && u.profileComplete && !blocked[uid])
+      .map(([uid, u]) => {
+        const canTeach = overlap(u.speaks, myLearning);
+        const canHelp = overlap(u.learning, mySpeaks);
+        return { uid, u, online: isOnline(uid), canTeach, canHelp, score: canTeach.length * 2 + canHelp.length };
+      });
+
+    const realOnline = rows.filter((r) => r.online).length;
+    // Online total shown = real online plus the example members that fill the dashboard up to 50.
+    const pseudoOnline = Math.max(0, 50 - realOnline);
+    $("#onlineCount").textContent = `${realOnline + pseudoOnline} Online`;
+
+    if (filter === "online") rows = rows.filter((r) => r.online);
+    if (filter === "teach") rows = rows.filter((r) => r.canTeach.length);
+    if (filter === "help") rows = rows.filter((r) => r.canHelp.length);
+    if (q) rows = rows.filter(({ u }) => [u.name, countryName(u.country), ...(u.speaks || []),
+      ...(u.learning || []), ...(u.interests || [])].join(" ").toLowerCase().includes(q));
+
+    rows.sort((a, b) => (b.online - a.online) || (b.score - a.score) || ((b.u.lastSeen || 0) - (a.u.lastSeen || 0)));
+
+    // Test mode: show at most 10 real members. Everyone else can still sign up and their data is
+    // saved in Firebase — they just aren't listed yet. Remove this cap to go fully live.
+    rows = rows.slice(0, 10);
+
+    const list = $("#list");
+    const realHTML = rows.map(realMemberCardHTML).join("");
+
+    // "All" and "Online now" views top up to 50 with clearly-labelled example members (all of
+    // which are active), so a new user sees a full, lively community. Real members come first.
+    if ((filter === "all" || filter === "online") && !q) {
+      const need = Math.max(0, 50 - rows.length);
+      const pseudoHTML = PSEUDO_POOL.slice(0, need).map((u, i) => pseudoMemberCard(u, i)).join("");
+      const intro = rows.length ? "" : `<div class="card empty" style="padding:20px 18px">
+          <div class="big">🌱</div>
+          <h2>Be the first real member</h2>
+          <p class="muted small" style="margin:8px 0 16px">Amoriva grows as people join. The cards below are <b>examples</b> that show how real members will appear here... tap Message to try a demo chat. Invite a friend to get the community started.</p>
+          <button class="btn btn-primary btn-sm" id="inviteBtn">📤 Invite friends</button>
+        </div>`;
+      list.innerHTML = intro + realHTML + pseudoHTML;
+      const ib = $("#inviteBtn"); if (ib) ib.onclick = invite;
+      return;
+    }
+
+    // Filtered / search views: real results only (no examples mixed in).
+    if (!rows.length) {
+      list.innerHTML = `<div class="card empty" style="padding:20px 18px">
+          <div class="big">🔎</div>
+          <h2>${filter === "online" ? "Nobody matching is online right now" : "No members match yet"}</h2>
+          <p class="muted small" style="margin:8px 0 2px">Try a different filter or search, or invite a friend to join.</p>
+        </div>`;
+      return;
+    }
+    list.innerHTML = realHTML;
+  }
+
+  function realMemberCardHTML(r) {
+    const { uid, u, online } = r;
+    const st = statusLabel(statuses[uid]);
+    const typing = statuses[uid] && statuses[uid].typing === true;
+    const statusHTML = typing
+      ? `<span class="status-text typing">${esc(countryName(u.country))}${countryName(u.country) ? " · " : ""}typing <span class="typing-dots"><span></span><span></span><span></span></span></span>`
+      : `<span class="status-text ${st.online ? "online" : ""}">${countryName(u.country) ? esc(countryName(u.country)) + " · " : ""}${st.text}</span>`;
+    const matchLine = r.canTeach.length
+      ? `<span class="pill" style="margin-top:6px">✨ Speaks ${esc(r.canTeach.join(", "))}</span>`
+      : r.canHelp.length ? `<span class="pill" style="margin-top:6px">🤝 Learning ${esc(r.canHelp.join(", "))}</span>` : "";
+    return `<div class="card member">
+      ${avatarHTML(u, uid, online)}
+      <div class="info">
+        <div class="name"><a href="profile.html?u=${encodeURIComponent(uid)}" style="color:inherit">${esc(u.name)}</a> ${flag(u.country)}</div>
+        ${statusHTML}
+        ${matchLine}
+        ${u.bio ? `<p class="bio">${esc(u.bio)}</p>` : ""}
+        <div class="lang-row"><b>Speaks:</b> ${esc((u.speaks || []).join(", "))}</div>
+        <div class="lang-row"><b>Learning:</b> ${esc((u.learning || []).join(", "))}</div>
+        ${(u.interests || []).length ? `<div class="chips" style="margin-top:8px">${u.interests.map((i) => `<span class="tag">${esc(i)}</span>`).join("")}</div>` : ""}
+        <span class="pill" style="margin-top:8px;background:#dcfce7;color:#15803d">⭐ Earn $0.40 – $1.00 per reply</span>
+        <div class="actions"><a class="btn btn-primary btn-sm" style="display:block;width:100%;text-align:center" href="chat.html?u=${encodeURIComponent(uid)}">💬 Message</a></div>
+      </div>
+    </div>`;
+  }
+
+  function invite() {
+    const data = { title: "Amoriva", text: "Join me on Amoriva — a free language & culture exchange.", url: location.origin + "/index.html" };
+    if (navigator.share) navigator.share(data).catch(() => {});
+    else { navigator.clipboard?.writeText(data.url); toast("Link copied"); }
+  }
+</script>
+</body>
+</html>
